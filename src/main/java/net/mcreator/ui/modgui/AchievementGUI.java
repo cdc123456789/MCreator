@@ -26,7 +26,6 @@ import net.mcreator.blockly.datapack.BlocklyToJSONTrigger;
 import net.mcreator.element.ModElementType;
 import net.mcreator.element.parts.AchievementEntry;
 import net.mcreator.element.types.Achievement;
-import net.mcreator.element.util.AnnotationUtils;
 import net.mcreator.generator.blockly.BlocklyBlockCodeGenerator;
 import net.mcreator.generator.blockly.OutputBlockCodeGenerator;
 import net.mcreator.generator.blockly.ProceduralBlockCodeGenerator;
@@ -47,7 +46,6 @@ import net.mcreator.ui.component.util.PanelUtils;
 import net.mcreator.ui.help.HelpUtils;
 import net.mcreator.ui.init.L10N;
 import net.mcreator.ui.minecraft.*;
-import net.mcreator.ui.modgui.util.ComponentFromAnnotation;
 import net.mcreator.ui.validation.ValidationGroup;
 import net.mcreator.ui.validation.component.VTextField;
 import net.mcreator.ui.workspace.resources.TextureType;
@@ -77,8 +75,10 @@ public class AchievementGUI extends ModElementGUI<Achievement> implements IBlock
 
 	private MCItemHolder achievementIcon;
 
-	private final TranslatedComboBox achievementType = ComponentFromAnnotation.translatedOptions(Achievement.class,
-			"achievementType", "elementgui.advancement.achievement_type.");
+	private final TranslatedComboBox achievementType = new TranslatedComboBox(
+			Map.entry("task", "elementgui.advancement.achievement_type.task"),
+			Map.entry("goal", "elementgui.advancement.achievement_type.goal"),
+			Map.entry("challenge", "elementgui.advancement.achievement_type.challenge"));
 
 	private TextureComboBox background;
 
@@ -93,7 +93,7 @@ public class AchievementGUI extends ModElementGUI<Achievement> implements IBlock
 	private ModElementListField rewardLoot;
 	private ModElementListField rewardRecipes;
 
-	private final JSpinner rewardXP = ComponentFromAnnotation.spinner(Achievement.class, "rewardXP");
+	private final JSpinner rewardXP = new JSpinner(new SpinnerNumberModel(0, 0, 64000, 1));
 
 	private BlocklyPanel blocklyPanel;
 	private final CompileNotesPanel compileNotesPanel = new CompileNotesPanel();
@@ -210,10 +210,11 @@ public class AchievementGUI extends ModElementGUI<Achievement> implements IBlock
 			BlocklyLoader.INSTANCE.getBlockLoader(BlocklyEditorType.JSON_TRIGGER)
 					.loadBlocksAndCategoriesInPanel(blocklyPanel, ToolboxType.JSON_TRIGGER);
 			blocklyPanel.addChangeListener(
-					_ -> new Thread(() -> regenerateBlockAssemblies(true), "TriggerRegenerate").start());
+					changeEvent -> new Thread(() -> regenerateBlockAssemblies(true), "TriggerRegenerate").start());
 		});
 		if (!isEditingMode()) {
-			blocklyPanel.setInitialXML(AnnotationUtils.getBlocklyXMLDefaultValue(Achievement.class, "triggerxml"));
+			blocklyPanel.setInitialXML(
+					"<xml><block type=\"advancement_trigger\" deletable=\"false\" x=\"40\" y=\"80\"/></xml>");
 		}
 
 		JPanel advancementTrigger = PanelUtils.centerAndSouthElement(blocklyPanel, compileNotesPanel);
